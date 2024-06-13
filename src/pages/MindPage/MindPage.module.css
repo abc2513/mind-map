@@ -1,0 +1,32 @@
+.mindmapNodeRoot{
+    display: flex;
+    align-items: center;
+    /* gap:4rem */
+    position: relative;
+}
+.mindmapNode{
+    padding: 1rem;
+    border-radius: .5rem;
+    border: 1px solid transparent;
+    overflow: hidden;
+    outline: none;
+}
+.mindmapNode:hover{
+    background-color: #f0f0f0;
+    border: 1px solid #000;
+}
+.mindmapNode[contenteditable="true"]{
+    border: 1px solid #b94b4b;
+}
+.mindmapNode:focus{
+    border: 1px solid #4bb94d;
+}
+
+.mindmapChildrenConatiner{
+
+}
+.pathConatiner{
+    align-self: stretch;
+    width: 40px;
+    /* background-color: aqua; */
+}
