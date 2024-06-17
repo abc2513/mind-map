@@ -3,8 +3,11 @@ import style from './MindPage.module.css'
 import { ActionType, initData, reducer } from './MindReducer';
 
 
-let selectedNode: string | undefined = undefined;
-let focusNode: string | undefined = undefined;
+import {
+  focusNode, selectedNode,
+  handleBlur, handleClick, handleFocus, handleMouseDown, handleMouseUp
+
+} from './eventHandlers';
 
 
 type nodeObjectType = {
@@ -25,29 +28,27 @@ function TreeNode(props: TreeNodeProps) {
 
 
   useEffect(() => {//这个函数在每次渲染完成后执行,用于重绘path
-      const childrenContianer = document.getElementById(`${id}-childrenContainer`);
-      const nodeText = document.getElementById(`${id}-text`);
-  
-      if (!childrenContianer || !nodeText || !nodeObject.children) return;
-      console.log('useEffect', id);
-      const newNodeHeight = childrenContianer.clientHeight;
-      if (newNodeHeight !== nodeHeight) {
-        console.log('nodeHeight change', id);
-        const nodeY = nodeText.offsetTop + nodeText.clientHeight / 2;
-        setNodeHeight(newNodeHeight);
-        setPathData(nodeObject.children.map((child, index) => {
-          const childNode = document.getElementById(`${id}-${index}`);
-          if (!childNode) return null;
-          const childY = childNode.offsetTop + childNode.clientHeight / 2;//孩子节点的中心点高度
-          return (<path d={`M 0 ${nodeY} L 20 ${nodeY} L 20 ${childY} L 40 ${childY}`} fill="none" stroke="black" strokeWidth='2' />)
-        }))
-      }
+    const childrenContianer = document.getElementById(`${id}-childrenContainer`);
+    const nodeText = document.getElementById(`${id}-text`);
+
+    if (!childrenContianer || !nodeText || !nodeObject.children) return;
+    const newNodeHeight = childrenContianer.clientHeight;
+    if (newNodeHeight !== nodeHeight) {
+      const nodeY = nodeText.offsetTop + nodeText.clientHeight / 2;
+      setNodeHeight(newNodeHeight);
+      setPathData(nodeObject.children.map((child, index) => {
+        const childNode = document.getElementById(`${id}-${index}-root`);
+        if (!childNode) return null;
+        const childY = childNode.offsetTop + childNode.clientHeight / 2;//孩子节点的中心点高度
+        return (<path d={`M 0 ${nodeY} L 20 ${nodeY} L 20 ${childY} L 40 ${childY}`} fill="none" stroke="black" strokeWidth='2' />)
+      }))
+    }
   })
   return (
-    <div className={style.mindmapNodeRoot} id={id}>
+    <div className={style.mindmapNodeRoot} id={`${id}-root`}>
       <div className={style.mindmapNode} id={`${id}-text`}
         suppressContentEditableWarning
-        draggable="true"
+        draggable={nodeObject.type === 'node' ? true : false}
       >{nodeObject.text}</div>
       {
         nodeObject.children && nodeObject.children.length !== 0 && (
@@ -94,58 +95,7 @@ const handleKeyUp = (e: KeyboardEvent) => {
     }
   }
 }
-const handleClick = (e: any) => {
-  // console.log(e.target);
-  const id = e.target?.id as string;
-  if (!id) return;
-  if (id.match(/-text$/)) {
-    if (id === selectedNode + '-text') {
-      //do nothing
-    } else {
-      console.log('select', id);
-      selectedNode = id.replace('-text', '');
-      //设置所有其他节点为不可编辑，当前节点可编辑
-      const allText = document.querySelectorAll(`.${style.mindmapNode}`) as NodeListOf<HTMLElement>;
 
-      for (let i = 0; i < allText.length; i++) {
-        if (allText[i].id === id) {
-          allText[i].contentEditable = 'true';
-        } else {
-          allText[i].contentEditable = 'false';
-        }
-      }
-    }
-
-  } else {
-    selectedNode = undefined;
-
-    //设置所有其他节点为不可编辑
-    const allText = document.querySelectorAll(`.${style.mindmapNode}`) as NodeListOf<HTMLElement>;
-    for (let i = 0; i < allText.length; i++) {
-      allText[i].contentEditable = 'false';
-    }
-  }
-};
-const handleFocus = (e: any) => {
-  // console.log(e.target);
-  const id = e.target?.id as string;
-  if (!id) return;
-  if (id.match(/-text$/)) {
-    console.log('focus', id);
-    focusNode = id.replace('-text', '');
-  }
-};
-const handleBlur = (e: any) => {
-  // console.log(e.target);
-  const id = e.target?.id as string;
-  if (!id) return;
-  if (id.match(/-text$/)) {
-    console.log('blur', id);
-    focusNode = undefined;
-  }
-};
-const handleDragStart = (e: any) => { }
-const handleDragOver = (e: any) => { }
 
 export default function MindPage() {
   const [treeData, dispatch] = useReducer(reducer, initData);
@@ -154,19 +104,39 @@ export default function MindPage() {
   }, [dispatch])
 
   useEffect(() => {
-
     try {
       document.body.removeEventListener('keyup', handleKeyUp);
     } catch (e) { }
     document.body.addEventListener('keyup', handleKeyUp)
   }, [])
+  useEffect(() => {
+    const root=document.getElementById('mindmapRoot');
+    const container=document.getElementById('mindmapContainer');
+    if(!root||!container)return;
+    // root.scrollTo(root.scrollWidth/2,root.scrollHeight/2);
+    root.scrollTo(
+      container.scrollWidth/2-window.innerWidth*3/5,
+      container.scrollHeight/2-window.innerHeight/2,
+    );
+  }, [])
   return (
     <div
-      onClick={handleClick}
-      onFocus={handleFocus}
-      onBlur={handleBlur}
-    >
-      <TreeNode nodeObject={treeData} id='0' />
+      style={{width:'100vw',height:'100vh',overflow:'hidden'}}id='mindmapRoot'>
+      <div
+        onClick={handleClick}
+        onFocus={handleFocus}
+        onBlur={handleBlur}
+        onMouseDown={handleMouseDown}
+        onMouseUp={handleMouseUp}
+        style={{
+          minWidth:'100%',
+          // minHeight:'100%',
+          padding:'50rem',
+        }}
+        id='mindmapContainer'
+      >
+        <TreeNode nodeObject={treeData} id='0' />
+      </div>
     </div>
   )
 }
