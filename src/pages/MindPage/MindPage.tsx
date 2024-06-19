@@ -1,13 +1,16 @@
-import { useEffect, useReducer, useState } from 'react'
+import { useEffect,useState } from 'react'
 import style from './MindPage.module.css'
-import { ActionType, initData, reducer } from './MindReducer';
 
 
 import {
   focusNode, selectedNode,
-  handleBlur, handleClick, handleFocus, handleMouseDown, handleMouseUp
+  handleBlur, handleClick, handleFocus, handleMouseDown, handleMouseUp,
+  handleWhell
 
 } from './eventHandlers';
+import { createNodeAfter, createNodeNext, deleteNode } from '../../reducers/MindReducer';
+import { useDispatch, useSelector } from 'react-redux';
+import MindPanel from './MindPanel';
 
 
 type nodeObjectType = {
@@ -25,7 +28,6 @@ function TreeNode(props: TreeNodeProps) {
   const { nodeObject, id } = props;
   const [pathData, setPathData] = useState<Array<any>>([]);
   const [nodeHeight, setNodeHeight] = useState<number>(0);
-
 
   useEffect(() => {//这个函数在每次渲染完成后执行,用于重绘path
     const childrenContianer = document.getElementById(`${id}-childrenContainer`);
@@ -71,23 +73,21 @@ function TreeNode(props: TreeNodeProps) {
 
     </div>
   )
-
 }
-let _dispatch = (() => { }) as any;
-const handleKeyUp = (e: KeyboardEvent) => {
+const getHandleKeyUp = (dispatch: any) => (e: KeyboardEvent) => {
   console.log(e.key);
   if (selectedNode) {
     if (!focusNode) {
       switch (e.key) {
         case 'Shift':
-          _dispatch({ type: ActionType.createAfter, data: selectedNode })
+          dispatch(createNodeAfter(selectedNode));
           break;
         case 'Enter':
-          _dispatch({ type: ActionType.createNext, data: selectedNode })
+          dispatch(createNodeNext(selectedNode));
           break;
         case 'Backspace':
           //删除当前节点
-          _dispatch({ type: ActionType.delete, data: selectedNode })
+          dispatch(deleteNode(selectedNode));
           break;
         default:
           break;
@@ -98,30 +98,30 @@ const handleKeyUp = (e: KeyboardEvent) => {
 
 
 export default function MindPage() {
-  const [treeData, dispatch] = useReducer(reducer, initData);
+  const dispatch = useDispatch();
+  const mind = useSelector((state: any) => state.mind);
   useEffect(() => {
-    _dispatch = dispatch;
-  }, [dispatch])
-
-  useEffect(() => {
-    try {
-      document.body.removeEventListener('keyup', handleKeyUp);
-    } catch (e) { }
+    const handleKeyUp = getHandleKeyUp(dispatch);
     document.body.addEventListener('keyup', handleKeyUp)
+    document.body.addEventListener('wheel', handleWhell)
+    return () => {
+      document.body.removeEventListener('keyup', handleKeyUp)
+      document.body.removeEventListener('wheel', handleWhell)
+    }
   }, [])
   useEffect(() => {
-    const root=document.getElementById('mindmapRoot');
-    const container=document.getElementById('mindmapContainer');
-    if(!root||!container)return;
+    const root = document.getElementById('mindmapRoot');
+    const container = document.getElementById('mindmapContainer');
+    if (!root || !container) return;
     // root.scrollTo(root.scrollWidth/2,root.scrollHeight/2);
     root.scrollTo(
-      container.scrollWidth/2-window.innerWidth*3/5,
-      container.scrollHeight/2-window.innerHeight/2,
+      container.scrollWidth / 2 - window.innerWidth * 3 / 5,
+      container.scrollHeight / 2 - window.innerHeight / 2,
     );
   }, [])
   return (
     <div
-      style={{width:'100vw',height:'100vh',overflow:'hidden'}}id='mindmapRoot'>
+      style={{ width: '100vw', height: '100vh', overflow: 'hidden',position:'relative' }} id='mindmapRoot'>
       <div
         onClick={handleClick}
         onFocus={handleFocus}
@@ -129,14 +129,15 @@ export default function MindPage() {
         onMouseDown={handleMouseDown}
         onMouseUp={handleMouseUp}
         style={{
-          minWidth:'100%',
+          minWidth: '100%',
           // minHeight:'100%',
-          padding:'50rem',
+          padding: '50rem',
         }}
         id='mindmapContainer'
       >
-        <TreeNode nodeObject={treeData} id='0' />
+        <TreeNode nodeObject={mind} id='0' />
       </div>
+      <MindPanel/>
     </div>
   )
 }

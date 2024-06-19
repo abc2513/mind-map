@@ -16,7 +16,7 @@
     border: 1px solid #000;
 }
 .mindmapNode[contenteditable="true"]{
-    border: 1px solid #b94b4b;
+    border: 1px solid #308fed;
 }
 .mindmapNode:focus{
     border: 1px solid #4bb94d;

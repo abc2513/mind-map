@@ -81,9 +81,14 @@ const handleMouseUp = function (e:React.MouseEvent) {//鼠标释放
   if (!node) return;
   node.removeEventListener('mousemove', handleMouseMoveWhenPress);
 }
-const handleWhell = function (e: React.WheelEvent) {//鼠标滚轮滚动
-  //todo  
+const handleWhell = function (e: WheelEvent) {//鼠标滚轮滚动
   // e.deltaX
+  if(e.ctrlKey){
+    const node = document.getElementById('mindmapContainer');
+    if (!node) return;
+    node.style.scale+=e.deltaY;
+
+  }
   
 }
 
